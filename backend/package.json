@@ -1,3 +1,4 @@
+
 {
   "name": "library-management-backend",
   "version": "1.0.0",
@@ -8,13 +9,14 @@
     "dev": "nodemon server.js",
     "test:db": "node test-db.js"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@google/genai": "^2.31.0",
     "cors": "^2.8.5",
-    "db": "^6.0.3",
     "dotenv": "^18.0.9",
     "express": "^4.21.2",
-    "mongo": "^0.1.0",
     "mongodb": "^7.7.0",
     "mongoose": "^8.24.7"
   },

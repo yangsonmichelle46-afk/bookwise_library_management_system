@@ -11,16 +11,50 @@ const { Book, connectDB } = require('./db');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ================================
+// =================================
 // MIDDLEWARE
-// ================================
+// =================================
 
-app.use(cors());
+// Vercel frontend URL(s), separated by commas in Render.
+const allowedOrigins = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map(origin => origin.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
+// Local development URLs.
+const localOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174'
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    const normalizedOrigin = origin.replace(/\/$/, '');
+
+    const isAllowed =
+      allowedOrigins.length === 0 ||
+      allowedOrigins.includes(normalizedOrigin) ||
+      localOrigins.includes(normalizedOrigin);
+
+    if (isAllowed) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Origin not allowed by CORS'));
+  }
+}));
+
 app.use(express.json({ limit: '1mb' }));
 
-// ================================
+// =================================
 // HELPER FUNCTIONS
-// ================================
+// =================================
 
 function normalizeBook(book) {
   if (!book) return null;
@@ -80,7 +114,9 @@ function validateBookInput(body = {}, isUpdate = false) {
   }
 
   if (!Number.isFinite(quantity) || quantity < 0) {
-    return { error: 'Quantity must be a valid non-negative number.' };
+    return {
+      error: 'Quantity must be a valid non-negative number.'
+    };
   }
 
   if (
@@ -97,7 +133,9 @@ function validateBookInput(body = {}, isUpdate = false) {
     year !== null &&
     (!Number.isInteger(year) || year < 0)
   ) {
-    return { error: 'Published year must be a valid whole number.' };
+    return {
+      error: 'Published year must be a valid whole number.'
+    };
   }
 
   return {
@@ -113,9 +151,9 @@ function validateBookInput(body = {}, isUpdate = false) {
   };
 }
 
-// ================================
-// HOME / API HEALTH CHECK
-// ================================
+// =================================
+// HOME / HEALTH CHECK
+// =================================
 
 app.get('/', (req, res) => {
   const connected = mongoose.connection.readyState === 1;
@@ -126,9 +164,21 @@ app.get('/', (req, res) => {
   });
 });
 
-// ================================
+// Render health check endpoint.
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    message: 'Bookwise backend is running.',
+    database:
+      mongoose.connection.readyState === 1
+        ? 'connected'
+        : 'disconnected'
+  });
+});
+
+// =================================
 // GET ALL BOOKS / SEARCH BOOKS
-// ================================
+// =================================
 
 app.get('/api/books', async (req, res) => {
   try {
@@ -188,9 +238,9 @@ app.get('/api/books', async (req, res) => {
   }
 });
 
-// ================================
+// =================================
 // GET ONE BOOK
-// ================================
+// =================================
 
 app.get('/api/books/:id', async (req, res) => {
   try {
@@ -221,9 +271,9 @@ app.get('/api/books/:id', async (req, res) => {
   }
 });
 
-// ================================
+// =================================
 // ADD NEW BOOK
-// ================================
+// =================================
 
 app.post('/api/books', async (req, res) => {
   try {
@@ -251,9 +301,9 @@ app.post('/api/books', async (req, res) => {
   }
 });
 
-// ================================
+// =================================
 // UPDATE BOOK
-// ================================
+// =================================
 
 app.put('/api/books/:id', async (req, res) => {
   try {
@@ -300,9 +350,9 @@ app.put('/api/books/:id', async (req, res) => {
   }
 });
 
-// ================================
+// =================================
 // DELETE BOOK
-// ================================
+// =================================
 
 app.delete('/api/books/:id', async (req, res) => {
   try {
@@ -333,9 +383,9 @@ app.delete('/api/books/:id', async (req, res) => {
   }
 });
 
-// ================================
+// =================================
 // GEMINI AI LIBRARY ASSISTANT
-// ================================
+// =================================
 
 app.post('/api/ai/chat', async (req, res) => {
   try {
@@ -458,9 +508,9 @@ ${message.trim()}
   }
 });
 
-// ================================
+// =================================
 // START SERVER
-// ================================
+// =================================
 
 async function startServer() {
   try {
@@ -474,7 +524,7 @@ async function startServer() {
       console.log('===================================');
       console.log('BOOKWISE LIBRARY MANAGEMENT SYSTEM');
       console.log(`Server running on port ${PORT}`);
-      console.log(`API URL: http://localhost:${PORT}`);
+      console.log(`Port: ${PORT}`);
       console.log('MongoDB: Connected');
       console.log('===================================');
     });
