@@ -10,6 +10,8 @@ import {
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/$/, '');
 const BOOKS_URL = `${API_BASE_URL}/api/books`;
+const AUTH_URL = `${API_BASE_URL}/api/auth`;
+const fetchOptions = { credentials: 'include' };
 const emptyForm = { title: '', author: '', isbn: '', category: '', publishedYear: '', quantity: 0, availableCopies: 0 };
 
 function normalizeBook(book) {
@@ -25,6 +27,36 @@ function normalizeBook(book) {
 }
 
 export default function App() {
+  const [admin, setAdmin] = useState(null);
+  const [authChecking, setAuthChecking] = useState(true);
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  useEffect(() => {
+    fetch(`${AUTH_URL}/me`, { credentials: 'include' })
+      .then(async response => { const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.message || 'Not logged in'); return data; })
+      .then(data => setAdmin(data.admin))
+      .catch(() => setAdmin(null))
+      .finally(() => setAuthChecking(false));
+  }, []);
+
+  const handleLogin = async event => {
+    event.preventDefault(); setAuthError(''); setAuthLoading(true);
+    try {
+      const response = await fetch(`${AUTH_URL}/login`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: loginEmail, password: loginPassword }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || 'Login failed.');
+      setAdmin(data.admin); setLoginPassword('');
+    } catch (error) { setAuthError(error.message); }
+    finally { setAuthLoading(false); }
+  };
+
+  const handleLogout = async () => {
+    try { await fetch(`${AUTH_URL}/logout`, { method: 'POST', credentials: 'include' }); }
+    finally { setAdmin(null); setBooks([]); setConnected(false); }
+  };
   const [books, setBooks] = useState([]);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -61,7 +93,7 @@ export default function App() {
   const loadBooks = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(BOOKS_URL);
+      const response = await fetch(BOOKS_URL, fetchOptions);
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.message || 'Could not load books.');
       const data = Array.isArray(payload) ? payload : (payload.data || []);
@@ -83,8 +115,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    loadBooks();
-  }, [loadBooks]);
+    if (admin) loadBooks();
+  }, [admin, loadBooks]);
 
   const categories = useMemo(() => [...new Set(books.map(book => book.category?.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b)), [books]);
   const stats = useMemo(() => ({
@@ -117,6 +149,29 @@ export default function App() {
     });
   }, [books, search, categoryFilter, sortBy]);
 
+
+  if (authChecking) return (<>\n    <style>{`.auth-screen{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,#edf2ed,#f8f5ec)}.auth-card{width:min(100%,430px);padding:40px;background:#fff;border:1px solid #e5e9e3;border-radius:22px;box-shadow:0 24px 70px rgba(23,61,53,.12);color:#183d35}.auth-logo{width:56px;height:56px;display:grid;place-items:center;border-radius:16px;background:#173d35;color:#f4e8c8;margin-bottom:24px}.auth-card h1{font-size:30px;margin:8px 0}.auth-subtitle,.auth-footnote{color:#68766f;line-height:1.6}.auth-field{display:grid;gap:8px;margin-top:18px;font-size:14px;font-weight:600}.auth-field input{width:100%;padding:13px 14px;border:1px solid #d8e0da;border-radius:10px;font:inherit}.auth-field input:focus{outline:2px solid #b6c9b8;border-color:#507b68}.auth-submit{width:100%;justify-content:center;margin-top:24px}.auth-error{padding:10px 12px;border-radius:9px;background:#fff0ee;color:#a33b30;font-size:14px}.auth-footnote{font-size:12px;margin-top:18px}.admin-email{font-size:13px;color:var(--muted,#66756e);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:700px){.admin-email{display:none}}`}</style>\n    <div className="auth-screen"><div className="auth-card"><BookOpen size={34} /><h1>Bookwise</h1><p>Checking administrator session…</p></div></div>\n  </>);
+
+  if (!admin) return (
+    <>
+            <style>{`.auth-screen{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,#edf2ed,#f8f5ec)}.auth-card{width:min(100%,430px);padding:40px;background:#fff;border:1px solid #e5e9e3;border-radius:22px;box-shadow:0 24px 70px rgba(23,61,53,.12);color:#183d35}.auth-logo{width:56px;height:56px;display:grid;place-items:center;border-radius:16px;background:#173d35;color:#f4e8c8;margin-bottom:24px}.auth-card h1{font-size:30px;margin:8px 0}.auth-subtitle,.auth-footnote{color:#68766f;line-height:1.6}.auth-field{display:grid;gap:8px;margin-top:18px;font-size:14px;font-weight:600}.auth-field input{width:100%;padding:13px 14px;border:1px solid #d8e0da;border-radius:10px;font:inherit}.auth-field input:focus{outline:2px solid #b6c9b8;border-color:#507b68}.auth-submit{width:100%;justify-content:center;margin-top:24px}.auth-error{padding:10px 12px;border-radius:9px;background:#fff0ee;color:#a33b30;font-size:14px}.auth-footnote{font-size:12px;margin-top:18px}.admin-email{font-size:13px;color:var(--muted,#66756e);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:700px){.admin-email{display:none}}`}</style>
+      <div className="auth-screen">
+      <form className="auth-card" onSubmit={handleLogin}>
+        <div className="auth-logo"><BookOpen size={28} /></div>
+        <p className="eyebrow">BOOKWISE LIBRARY</p>
+        <h1>Administrator login</h1>
+        <p className="auth-subtitle">Sign in to manage your library workspace.</p>
+        <label className="auth-field">Email address<input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} autoComplete="username" required /></label>
+        <label className="auth-field">Password<input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} autoComplete="current-password" required /></label>
+        {authError && <p className="auth-error">{authError}</p>}
+        <button className="button primary auth-submit" type="submit" disabled={authLoading}>{authLoading ? 'Signing in…' : 'Sign in'}</button>
+        <p className="auth-footnote">Administrator access only. Contact your system administrator if you need an account.</p>
+      </form>
+      </div>
+    </>
+  );
+
+
   const openAdd = () => {
     setEditingId(null); setForm({ ...emptyForm }); setFormError(''); setDialogOpen(true);
   };
@@ -148,7 +203,7 @@ export default function App() {
     setSaving(true);
     try {
       const response = await fetch(editingId ? `${BOOKS_URL}/${editingId}` : BOOKS_URL, {
-        method: editingId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bookData)
+        method: editingId ? 'PUT' : 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bookData)
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.message || 'Could not save book.');
@@ -168,7 +223,7 @@ export default function App() {
     setChatInput(''); setChatLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: question })
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: question })
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.message || 'The AI assistant could not respond.');
@@ -185,7 +240,7 @@ export default function App() {
     }
     if (!window.confirm(`Delete “${book.title}”? This cannot be undone.`)) return;
     try {
-      const response = await fetch(`${BOOKS_URL}/${book.id}`, { method: 'DELETE' });
+      const response = await fetch(`${BOOKS_URL}/${book.id}`, { method: 'DELETE', credentials: 'include' });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.message || 'Could not delete book.');
       showMessage('Book deleted successfully.'); await loadBooks();
@@ -204,6 +259,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      <style>{`.auth-screen{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,#edf2ed,#f8f5ec)}.auth-card{width:min(100%,430px);padding:40px;background:#fff;border:1px solid #e5e9e3;border-radius:22px;box-shadow:0 24px 70px rgba(23,61,53,.12);color:#183d35}.auth-logo{width:56px;height:56px;display:grid;place-items:center;border-radius:16px;background:#173d35;color:#f4e8c8;margin-bottom:24px}.auth-card h1{font-size:30px;margin:8px 0}.auth-subtitle,.auth-footnote{color:#68766f;line-height:1.6}.auth-field{display:grid;gap:8px;margin-top:18px;font-size:14px;font-weight:600}.auth-field input{width:100%;padding:13px 14px;border:1px solid #d8e0da;border-radius:10px;font:inherit}.auth-field input:focus{outline:2px solid #b6c9b8;border-color:#507b68}.auth-submit{width:100%;justify-content:center;margin-top:24px}.auth-error{padding:10px 12px;border-radius:9px;background:#fff0ee;color:#a33b30;font-size:14px}.auth-footnote{font-size:12px;margin-top:18px}.admin-email{font-size:13px;color:var(--muted,#66756e);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:700px){.admin-email{display:none}}`}</style>
       <aside className={`sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <a className="sidebar-brand" href="#dashboard" onClick={() => setMobileMenuOpen(false)}>
           <span className="brand-mark"><BookOpen size={23} strokeWidth={2.2} /></span>
@@ -233,7 +289,7 @@ export default function App() {
           <div className="topbar-actions">
             <span className={`connection-badge ${connected ? 'connected' : 'disconnected'}`}>{connected ? <Wifi size={15} /> : <WifiOff size={15} />}{connected ? 'API connected' : 'API offline'}</span>
             <button className="theme-toggle" onClick={() => setDarkMode(value => !value)} title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'} aria-label="Toggle color theme">{darkMode ? <Sun size={18} /> : <Moon size={18} />}</button>
-            <button className="button primary top-add" onClick={openAdd}><Plus size={17} /> Add book</button>
+            <button className="button secondary" onClick={handleLogout}>Log out</button><button className="button primary top-add" onClick={openAdd}><Plus size={17} /> Add book</button>
           </div>
         </header>
 

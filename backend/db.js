@@ -1,19 +1,13 @@
-
 // ========================================
 // BOOKWISE DATABASE CONFIGURATION
 // ========================================
 
-// DNS configuration for MongoDB Atlas
 const dns = require('dns');
 
 dns.setServers([
   '1.1.1.1',
   '8.8.8.8'
 ]);
-
-// ========================================
-// LOAD ENVIRONMENT VARIABLES
-// ========================================
 
 const path = require('path');
 
@@ -22,91 +16,115 @@ require('dotenv').config({
   override: true
 });
 
-// ========================================
-// IMPORT MONGOOSE
-// ========================================
-
 const mongoose = require('mongoose');
 
 // ========================================
 // BOOK SCHEMA
 // ========================================
 
-const bookSchema = new mongoose.Schema(
-  {
-    title: {
-      type: String,
-      required: true,
-      trim: true
-    },
-
-    author: {
-      type: String,
-      required: true,
-      trim: true
-    },
-
-    isbn: {
-      type: String,
-      trim: true,
-      default: '',
-      index: true
-    },
-
-    category: {
-      type: String,
-      trim: true,
-      default: ''
-    },
-
-    publishedYear: {
-      type: Number,
-      default: null
-    },
-
-    quantity: {
-      type: Number,
-      required: true,
-      default: 0,
-      min: 0
-    },
-
-    availableCopies: {
-      type: Number,
-      required: true,
-      default: 0,
-      min: 0,
-      validate: {
-        validator: function (value) {
-          return value <= this.quantity;
-        },
-        message:
-          'Available copies cannot exceed total quantity.'
-      }
-    }
+const bookSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true,
+    trim: true
   },
-  {
-    timestamps: true,
-    versionKey: false
-  }
-);
 
-// ========================================
-// CREATE BOOK MODEL
-// ========================================
+  author: {
+    type: String,
+    required: true,
+    trim: true
+  },
+
+  isbn: {
+    type: String,
+    trim: true,
+    default: '',
+    index: true
+  },
+
+  category: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+
+  publishedYear: {
+    type: Number,
+    default: null
+  },
+
+  quantity: {
+    type: Number,
+    required: true,
+    default: 0,
+    min: 0
+  },
+
+  availableCopies: {
+    type: Number,
+    required: true,
+    default: 0,
+    min: 0,
+    validate: {
+      validator: function (value) {
+        return value <= this.quantity;
+      },
+      message: 'Available copies cannot exceed total quantity.'
+    }
+  }
+
+}, {
+  timestamps: true,
+  versionKey: false
+});
 
 const Book =
   mongoose.models.Book ||
   mongoose.model('Book', bookSchema);
 
 // ========================================
-// CONNECT TO MONGODB ATLAS
+// ADMIN SCHEMA
+// ========================================
+
+const adminSchema = new mongoose.Schema({
+
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true
+  },
+
+  passwordHash: {
+    type: String,
+    required: true,
+    select: false
+  },
+
+  role: {
+    type: String,
+    enum: ['admin'],
+    default: 'admin'
+  }
+
+}, {
+  timestamps: true,
+  versionKey: false
+});
+
+const Admin =
+  mongoose.models.Admin ||
+  mongoose.model('Admin', adminSchema);
+
+// ========================================
+// CONNECT TO MONGODB
 // ========================================
 
 async function connectDB() {
+
   const uri = process.env.MONGODB_URI;
 
-  // Check if MongoDB URI exists
   if (!uri || !uri.trim()) {
     throw new Error(
       'MONGODB_URI is missing from backend/.env'
@@ -115,80 +133,56 @@ async function connectDB() {
 
   let parsedUri;
 
-  // Validate connection string
   try {
     parsedUri = new URL(uri);
-  } catch (error) {
+  } catch {
     throw new Error(
-      'Invalid MongoDB connection string. Check your backend .env file.'
+      'Invalid MongoDB connection string.'
     );
   }
 
-  // Validate MongoDB protocol
   if (
     parsedUri.protocol !== 'mongodb:' &&
     parsedUri.protocol !== 'mongodb+srv:'
   ) {
     throw new Error(
-      'Invalid MongoDB protocol. Use mongodb:// or mongodb+srv://'
+      'Invalid MongoDB protocol.'
     );
   }
 
-  // Safe connection diagnostics
-  console.log('\n===================================');
-  console.log('BOOKWISE MONGODB CONFIGURATION');
-  console.log('===================================');
-
-  console.log('Protocol:', parsedUri.protocol);
-  console.log('Hostname:', parsedUri.hostname);
-  console.log(
-    'Database:',
-    parsedUri.pathname || '(not specified)'
-  );
-
-  console.log('DNS Servers: 1.1.1.1, 8.8.8.8');
   console.log('Connecting to MongoDB...');
+  console.log('MongoDB Host:', parsedUri.hostname);
+  console.log('Database:', parsedUri.pathname);
 
-  // Prevent an invalid numeric hostname
-  if (/^\d+$/.test(parsedUri.hostname)) {
-    throw new Error(
-      'Invalid MongoDB hostname. Copy the correct connection string from MongoDB Atlas.'
-    );
-  }
-
-  // Connect to MongoDB
   try {
+
     await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 15000
     });
 
-    console.log('\n===================================');
-    console.log('MONGODB CONNECTED SUCCESSFULLY!');
-    console.log('===================================');
-    console.log(
-      'Database:',
-      mongoose.connection.name
-    );
-    console.log('Status: Connected');
+    console.log('MongoDB connected successfully!');
+    console.log('Database:', mongoose.connection.name);
 
     return mongoose.connection;
 
   } catch (error) {
-    console.error('\n===================================');
-    console.error('MONGODB CONNECTION FAILED');
-    console.error('===================================');
-    console.error('Error:', error.message);
+
+    console.error(
+      'MongoDB connection failed:',
+      error.message
+    );
 
     throw error;
   }
 }
 
 // ========================================
-// EXPORT DATABASE FUNCTIONS
+// EXPORT
 // ========================================
 
 module.exports = {
   mongoose,
   Book,
+  Admin,
   connectDB
 };

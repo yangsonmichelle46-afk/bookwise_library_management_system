@@ -6,3 +6,100 @@
 @media(max-width:1100px){.sidebar{width:220px}.workspace{margin-left:220px}.container{padding-inline:26px}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero-art{right:0;width:38%;opacity:.8}.hero-banner{padding:34px}.hero-banner h1{font-size:39px}}
 @media(max-width:760px){.sidebar{transform:translateX(-100%);transition:transform .25s;width:260px}.sidebar.sidebar-open{transform:translateX(0)}.mobile-scrim{display:block;position:fixed;inset:0;z-index:19;border:0;background:#0d1912a3}.workspace{margin-left:0}.mobile-menu-button{display:grid}.topbar{height:70px;padding:0 17px;gap:12px}.topbar-context{margin-right:auto}.topbar-actions{gap:7px}.connection-badge{font-size:0;padding:9px}.connection-badge svg{width:16px;height:16px}.top-add{font-size:0;padding:10px}.top-add svg{margin:0}.container{padding:20px 15px}.hero-banner{min-height:330px;padding:27px 23px;align-items:flex-start}.hero-copy{max-width:100%}.hero-banner h1{font-size:37px}.hero-description{max-width:330px;font-size:11px}.hero-art{width:46%;right:-17%;top:100px;opacity:.25}.hero-index{left:23px;bottom:16px}.hero-actions{gap:15px;flex-wrap:wrap}.section-heading{margin-top:24px}.section-heading h2,.panel-heading h2{font-size:18px}.stats-grid{gap:10px}.stat-card{min-height:99px;padding:13px;gap:10px}.stat-icon{width:37px;height:37px}.stat-content strong{font-size:22px}.stat-content small{font-size:8px;white-space:normal}.ai-panel,.panel{padding:17px;margin-top:18px}.ai-panel-heading{align-items:flex-start;flex-wrap:wrap}.ai-panel-heading>div:nth-child(2){flex:1;min-width:180px}.ai-status{margin-left:60px}.panel-heading{align-items:flex-start;flex-direction:column}.panel-actions{width:100%}.panel-actions .button{flex:1}.collection-toolbar{flex-wrap:wrap}.search-box{flex-basis:100%;max-width:none}.select-control{flex:1;min-width:0}.select-control select{max-width:100%;width:100%}.table-meta span:last-child{display:none}.footer{flex-wrap:wrap}.footer-spacer{display:none}}
 @media(max-width:420px){.stats-grid{grid-template-columns:1fr 1fr}.stat-card{align-items:flex-start;flex-direction:column;min-height:125px}.hero-banner h1{font-size:32px}.hero-description{max-width:260px}.hero-actions .button{padding:10px}.text-link{font-size:10px}.topbar-context strong{font-size:12px}.topbar-kicker{font-size:8px}.form-grid{grid-template-columns:1fr}.modal{padding:20px}.modal-actions{flex-wrap:wrap}.modal-actions .button{flex:1}}
+
+/* ========================================
+   BOOKWISE ADMIN LOGIN
+======================================== */
+
+.auth-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #f4f5ef;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 430px;
+  padding: 42px;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.08);
+}
+
+.auth-logo {
+  width: 58px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  background: #173d35;
+  color: #ffffff;
+  margin-bottom: 24px;
+}
+
+.auth-card h1 {
+  color: #173d35;
+  font-size: 29px;
+  margin: 8px 0;
+}
+
+.auth-subtitle {
+  color: #777;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+.auth-field {
+  display: block;
+  margin-bottom: 18px;
+  color: #34443e;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.auth-field input {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 13px 14px;
+  border: 1px solid #deded8;
+  border-radius: 9px;
+  outline: none;
+  font: inherit;
+}
+
+.auth-field input:focus {
+  border-color: #173d35;
+  box-shadow: 0 0 0 3px rgba(23, 61, 53, 0.1);
+}
+
+.auth-submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.auth-error {
+  color: #b42318;
+  background: #fff0ef;
+  padding: 11px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.auth-footnote {
+  margin-top: 22px;
+  color: #888;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 28px 22px;
+  }
+}
