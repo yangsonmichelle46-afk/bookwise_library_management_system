@@ -1,3 +1,4 @@
+
 // ========================================
 // BOOKWISE DATABASE CONFIGURATION
 // ========================================
@@ -23,6 +24,7 @@ const mongoose = require('mongoose');
 // ========================================
 
 const bookSchema = new mongoose.Schema({
+
   title: {
     type: String,
     required: true,
@@ -78,44 +80,13 @@ const bookSchema = new mongoose.Schema({
   versionKey: false
 });
 
+// ========================================
+// BOOK MODEL
+// ========================================
+
 const Book =
   mongoose.models.Book ||
   mongoose.model('Book', bookSchema);
-
-// ========================================
-// ADMIN SCHEMA
-// ========================================
-
-const adminSchema = new mongoose.Schema({
-
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true
-  },
-
-  passwordHash: {
-    type: String,
-    required: true,
-    select: false
-  },
-
-  role: {
-    type: String,
-    enum: ['admin'],
-    default: 'admin'
-  }
-
-}, {
-  timestamps: true,
-  versionKey: false
-});
-
-const Admin =
-  mongoose.models.Admin ||
-  mongoose.model('Admin', adminSchema);
 
 // ========================================
 // CONNECT TO MONGODB
@@ -183,6 +154,5 @@ async function connectDB() {
 module.exports = {
   mongoose,
   Book,
-  Admin,
   connectDB
 };
